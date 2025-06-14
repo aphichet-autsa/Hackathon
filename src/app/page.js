@@ -1,65 +1,51 @@
-'use client'; // กำหนดให้เป็น Client Component
-
+'use client';
 import { useState } from 'react';
 
 export default function HomePage() {
   const [prompt, setPrompt] = useState('');
-  const [result, setResult] = useState('');
+  const [response, setResponse] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setResult(''); // ล้างผลลัพธ์เก่า
+  const handleSubmit = async () => {
+    if (!prompt.trim()) return;
 
+    setLoading(true);
+    setResponse('');
     try {
-      const response = await fetch('/api/gemini', {
+      const res = await fetch('/api/gemini', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt }),
       });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setResult(data.text);
-      } else {
-        throw new Error(data.error || 'Something went wrong');
-      }
-
-    } catch (error) {
-      console.error(error);
-      setResult(`Error: ${error.message}`);
+      const data = await res.json();
+      setResponse(data.text || data.error);
+    } catch (err) {
+      setResponse('เกิดข้อผิดพลาด');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div>
-      <h1>Gemini AI with Next.js</h1>
-      <form onSubmit={handleSubmit}>
-        <textarea
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          placeholder="ถามอะไร Gemini ก็ได้..."
-          rows="4"
-          cols="50"
-        />
-        <br />
-        <button type="submit" disabled={loading}>
-          {loading ? 'กำลังประมวลผล...' : 'ส่งคำถาม'}
-        </button>
-      </form>
-
-      {result && (
-        <div>
-          <h2>คำตอบ:</h2>
-          <p>{result}</p>
-        </div>
-      )}
-    </div>
+    <main style={{ padding: 20, maxWidth: 700, margin: '0 auto', fontFamily: 'sans-serif' }}>
+      <h1>📨 ระบบแจ้งปัญหาอัจฉริยะ</h1>
+      <p>โปรดแจ้งปัญหาหรือสอบถามเรื่องราชการ แล้วระบบ AI จะช่วยตอบกลับให้ทันที</p>
+      <textarea
+        rows={4}
+        value={prompt}
+        onChange={(e) => setPrompt(e.target.value)}
+        placeholder="พิมพ์ข้อความ เช่น 'ถนนหน้าบ้านพัง น้ำไม่ไหล ขอเอกสารย้ายทะเบียน'"
+        style={{ width: '100%', marginTop: 10 }}
+      />
+      <br />
+      <button onClick={handleSubmit} disabled={loading} style={{ marginTop: 10 }}>
+        {loading ? 'กำลังส่ง...' : 'ส่งคำถาม'}
+      </button>
+      <hr />
+      <h3>🧠 คำตอบจาก AI</h3>
+      <div style={{ whiteSpace: 'pre-wrap', background: '#f3f3f3', padding: 15 }}>
+        {response}
+      </div>
+    </main>
   );
 }
